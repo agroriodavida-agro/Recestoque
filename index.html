@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2765/2765011.png">
 
 <meta property="og:title" content="AgroPro">
-<meta property="og:description" content="Receitu·rio e Estoque AgrÌcola na Nuvem">
+<meta property="og:description" content="Receitu√°rio e Estoque Agr√≠cola na Nuvem">
 <meta property="og:image" content="https://cdn-icons-png.flaticon.com/512/2765/2765011.png">
 <meta property="og:type" content="website">
 
@@ -123,7 +123,7 @@ td{padding:10px 4px;border-bottom:1px solid #f0f0f0;font-size:13px;}
 <body>
 
 <!-- OFFLINE BAR -->
-<div class="offline-bar" id="offline-bar"> VocÍ est· offline ó dados salvos localmente</div>
+<div class="offline-bar" id="offline-bar"> Voc√™ est√° offline ‚Äî dados salvos localmente</div>
 
 <!-- INSTALL BANNER -->
 <div id="install-banner">
@@ -137,14 +137,14 @@ td{padding:10px 4px;border-bottom:1px solid #f0f0f0;font-size:13px;}
   <div class="auth-box">
     <div class="auth-logo">
       <h2> AgroPro</h2>
-      <p>Receitu·rio ∑ Estoque ∑ Nuvem</p>
+      <p>Receitu√°rio ¬∑ Estoque ¬∑ Nuvem</p>
     </div>
     <div class="auth-tabs">
       <button class="auth-tab active" onclick="switchTab('login')">Entrar</button>
       <button class="auth-tab" onclick="switchTab('signup')">Cadastrar</button>
     </div>
     <div class="afield"><label>E-mail</label><input type="email" id="aEmail" placeholder="seu@email.com" autocomplete="email"></div>
-    <div class="afield"><label>Senha</label><input type="password" id="aSenha" placeholder="ïïïïïïïï" autocomplete="current-password"></div>
+    <div class="afield"><label>Senha</label><input type="password" id="aSenha" placeholder="‚Ä¢‚Ä¢‚Ä¢‚Ä¢‚Ä¢‚Ä¢‚Ä¢‚Ä¢" autocomplete="current-password"></div>
     <div class="afield hidden" id="f-nome"><label>Nome</label><input type="text" id="aNome" placeholder="Seu nome"></div>
     <button class="btn-auth" id="btnAuth" onclick="handleAuth()">ENTRAR</button>
     <div id="auth-msg"></div>
@@ -154,7 +154,7 @@ td{padding:10px 4px;border-bottom:1px solid #f0f0f0;font-size:13px;}
 <!-- APP -->
 <div id="app">
   <div class="topbar">
-    <div class="topbar-left"> AgroPro ó <span id="chip-user"></span></div>
+    <div class="topbar-left"> AgroPro ‚Äî <span id="chip-user"></span></div>
     <div class="topbar-right">
       <span class="sync-txt" id="sync-txt"> online</span>
       <button class="btn-sair" onclick="logout()">Sair</button>
@@ -169,21 +169,21 @@ td{padding:10px 4px;border-bottom:1px solid #f0f0f0;font-size:13px;}
 
   <div class="container">
 
-    <!-- RECEITU¡RIO -->
+    <!-- RECEITU√ÅRIO -->
     <div id="v-rec" class="view active-view">
       <div class="card tema-rec">
-        <h3> ¡rea e Calda</h3>
-        <label>Fazenda / Talh„o</label>
-        <input type="text" id="faz" placeholder="Ex: Fazenda Santa FÈ">
+        <h3> √Årea e Calda</h3>
+        <label>Fazenda / Talh√£o</label>
+        <input type="text" id="faz" placeholder="Ex: Fazenda Santa F√©">
         <div class="grid-3">
-          <div><label>¡rea (ha)</label><input type="number" id="ha" oninput="calc()"></div>
+          <div><label>√Årea (ha)</label><input type="number" id="ha" oninput="calc()"></div>
           <div><label>Tanque (L)</label><input type="number" id="tq" value="2000" oninput="calc()"></div>
-          <div><label>Vaz„o (L/ha)</label><input type="number" id="vz" value="100" oninput="calc()"></div>
+          <div><label>Vaz√£o (L/ha)</label><input type="number" id="vz" value="100" oninput="calc()"></div>
         </div>
         <div class="box-info">
           <div><span>CALDA TOTAL</span><b id="res-calda">0 L</b></div>
           <div><span>TANQUES</span><b id="res-tanque">0</b></div>
-          <div><span>⁄LTIMO TQ</span><b id="res-resto">0 L</b></div>
+          <div><span>√öLTIMO TQ</span><b id="res-resto">0 L</b></div>
         </div>
       </div>
 
@@ -199,7 +199,7 @@ td{padding:10px 4px;border-bottom:1px solid #f0f0f0;font-size:13px;}
         </div>
         <button class="btn btn-verde" onclick="addP()">+ ADICIONAR PRODUTO</button>
         <table><tbody id="lista-p"></tbody></table>
-        <label>ObservaÁıes</label>
+        <label>Observa√ß√µes</label>
         <textarea id="obs_r" rows="2" placeholder="Opcional..."></textarea>
         <button class="btn btn-verde" style="background:#2e7d32;margin-top:12px" id="btnSalvarOS" onclick="salvarR()"> GERAR OS E BAIXAR ESTOQUE</button>
       </div>
@@ -213,12 +213,12 @@ td{padding:10px 4px;border-bottom:1px solid #f0f0f0;font-size:13px;}
     <!-- ESTOQUE -->
     <div id="v-est" class="view">
       <div class="card tema-est">
-        <h3> LanÁar Movimento</h3>
+        <h3> Lan√ßar Movimento</h3>
         <label>Tipo</label>
         <select id="eTip" onchange="ajustarMotivo()">
           <option value="ENTRADA"> ENTRADA</option>
-          <option value="SAIDA"> SAÕDA</option>
-          <option value="EMPRESTIMO"> EMPR…STIMO</option>
+          <option value="SAIDA"> SA√çDA</option>
+          <option value="EMPRESTIMO"> EMPR√âSTIMO</option>
         </select>
         <label>Produto</label>
         <input type="text" id="eNom" placeholder="Nome do Produto">
@@ -234,26 +234,26 @@ td{padding:10px 4px;border-bottom:1px solid #f0f0f0;font-size:13px;}
       </div>
 
       <div class="card tema-est">
-        <h3> RelatÛrios PDF</h3>
+        <h3> Relat√≥rios PDF</h3>
         <div style="display:flex;gap:5px;margin-bottom:12px;">
           <button class="btn-sm-rel" onclick="relatorio('INVENTARIO')">ESTOQUE</button>
-          <button class="btn-sm-rel" onclick="relatorio('SAIDA')">SAÕDAS</button>
-          <button class="btn-sm-rel" onclick="relatorio('EMPRESTIMO')">EMPR…ST.</button>
+          <button class="btn-sm-rel" onclick="relatorio('SAIDA')">SA√çDAS</button>
+          <button class="btn-sm-rel" onclick="relatorio('EMPRESTIMO')">EMPR√âST.</button>
         </div>
         <h3> Saldos Atuais</h3>
         <div id="saldos-e"><div class="loading">Carregando...</div></div>
       </div>
     </div>
 
-    <!-- MOVIMENTA«’ES -->
+    <!-- MOVIMENTA√á√ïES -->
     <div id="v-mov" class="view">
       <div class="card tema-mov">
-        <h3> HistÛrico de MovimentaÁıes</h3>
+        <h3> Hist√≥rico de Movimenta√ß√µes</h3>
         <div class="filtro-bar">
           <button class="fbtn active" onclick="setFiltro('TODOS',this)">Todos</button>
           <button class="fbtn" onclick="setFiltro('ENTRADA',this)">Entradas</button>
-          <button class="fbtn" onclick="setFiltro('SAIDA',this)">SaÌdas</button>
-          <button class="fbtn" onclick="setFiltro('EMPRESTIMO',this)">EmprÈstimos</button>
+          <button class="fbtn" onclick="setFiltro('SAIDA',this)">Sa√≠das</button>
+          <button class="fbtn" onclick="setFiltro('EMPRESTIMO',this)">Empr√©stimos</button>
         </div>
         <div id="lista-movs"><div class="loading">Carregando...</div></div>
       </div>
