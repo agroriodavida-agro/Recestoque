@@ -17,7 +17,7 @@ let authMode  = 'login';
 let deferredPrompt = null; // PWA install prompt
 
 // ============================================================
-// PWA ó SERVICE WORKER + INSTALL
+// PWA ‚Äî SERVICE WORKER + INSTALL
 // ============================================================
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -101,7 +101,7 @@ async function handleAuth() {
       entrar();
     }
   } catch(e) {
-    showMsg('Sem conex„o com a internet.', 'err');
+    showMsg('Sem conex√£o com a internet.', 'err');
   }
   btn.disabled = false;
   btn.textContent = authMode === 'login' ? 'ENTRAR' : 'CADASTRAR';
@@ -109,7 +109,7 @@ async function handleAuth() {
 
 function tErr(m) {
   if (m.includes('Invalid login'))      return 'E-mail ou senha incorretos.';
-  if (m.includes('already registered')) return 'E-mail j· cadastrado.';
+  if (m.includes('already registered')) return 'E-mail j√° cadastrado.';
   if (m.includes('Password should'))    return 'Senha deve ter 6+ caracteres.';
   return m;
 }
@@ -132,7 +132,7 @@ function entrar() {
   carregarTudo();
 }
 
-// Checar sess„o ao abrir
+// Checar sess√£o ao abrir
 sb.auth.getSession().then(({ data: { session } }) => {
   if (session) { user = session.user; entrar(); }
 });
@@ -171,7 +171,7 @@ async function carregarTudo() {
 }
 
 // ============================================================
-// ESTOQUE ó CACHE
+// ESTOQUE ‚Äî CACHE
 // ============================================================
 async function carregarEstoque() {
   if (!user) return;
@@ -197,14 +197,14 @@ function checarEstoque() {
   if (p) {
     div.innerHTML = `<span style="color:#2e7d32;font-weight:700"> Em estoque: ${(p.qtd||0).toFixed(2)} ${p.unid||''}</span>`;
   } else if (nome.length > 1) {
-    div.innerHTML = `<span class="alerta-sem-est"> Fora do estoque ó ser· adicionado mesmo assim</span>`;
+    div.innerHTML = `<span class="alerta-sem-est"> Fora do estoque ‚Äî ser√° adicionado mesmo assim</span>`;
   } else {
     div.innerHTML = '';
   }
 }
 
 // ============================================================
-// RECEITA ó C¡LCULO
+// RECEITA ‚Äî C√ÅLCULO
 // ============================================================
 function calc() {
   const h = parseFloat(document.getElementById('ha').value) || 0;
@@ -257,7 +257,7 @@ function renderItens() {
 async function salvarR() {
   const f = document.getElementById('faz').value.trim().toUpperCase();
   const h = parseFloat(document.getElementById('ha').value);
-  if (!f || !h || itens.length === 0) return alert('Preencha Fazenda, ¡rea e adicione produtos!');
+  if (!f || !h || itens.length === 0) return alert('Preencha Fazenda, √Årea e adicione produtos!');
   if (!user) return;
 
   const btn = document.getElementById('btnSalvarOS');
@@ -305,8 +305,8 @@ async function salvarR() {
     gerarPDF_OS({ faz: f, ha: h, t, v, obs, itens: [...itens] });
 
     const resumo = baixas.length > 0
-      ? '\n\nEstoque baixado:\n' + baixas.map(b => `ï ${b.nome}: ${b.antes}  ${b.depois} ${b.unid}`).join('\n')
-      : '\n\n(Produtos fora do estoque n„o foram baixados)';
+      ? '\n\nEstoque baixado:\n' + baixas.map(b => `‚Ä¢ ${b.nome}: ${b.antes}  ${b.depois} ${b.unid}`).join('\n')
+      : '\n\n(Produtos fora do estoque n√£o foram baixados)';
     alert(' OS Gerada e salva na nuvem!' + resumo);
 
     // Limpar
@@ -337,7 +337,7 @@ async function carregarOS() {
     <div class="item-lista" style="border-left-color:var(--verde)">
       <span>
         <b>${r.fazenda}</b><br>
-        <small>${r.area} ha ∑ ${r.produtos.length} produtos ∑ ${new Date(r.created_at).toLocaleDateString('pt-BR')}</small>
+        <small>${r.area} ha ¬∑ ${r.produtos.length} produtos ¬∑ ${new Date(r.created_at).toLocaleDateString('pt-BR')}</small>
       </span>
       <div style="display:flex;gap:4px">
         <button style="background:var(--verde);color:white;border:none;padding:6px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer"
@@ -369,7 +369,7 @@ async function excluirOS(id) {
 }
 
 // ============================================================
-// ESTOQUE ó LAN«AR
+// ESTOQUE ‚Äî LAN√áAR
 // ============================================================
 function ajustarMotivo() {
   const t = document.getElementById('eTip').value;
@@ -443,7 +443,7 @@ async function excluirProduto(id) {
 }
 
 // ============================================================
-// MOVIMENTA«’ES
+// MOVIMENTA√á√ïES
 // ============================================================
 function setFiltro(f, btn) {
   filtroMov = f;
@@ -459,7 +459,7 @@ async function renderMovs() {
   const { data } = await q;
   const div = document.getElementById('lista-movs');
   if (!data || data.length === 0) {
-    div.innerHTML = '<p style="padding:16px;color:#888;font-size:13px;text-align:center">Nenhuma movimentaÁ„o.</p>';
+    div.innerHTML = '<p style="padding:16px;color:#888;font-size:13px;text-align:center">Nenhuma movimenta√ß√£o.</p>';
     return;
   }
   div.innerHTML = data.map(m => {
@@ -470,13 +470,13 @@ async function renderMovs() {
       <span class="badge ${badgeCls}">${m.tipo}</span>
       <b style="margin-left:6px">${m.nome}</b>
       <span style="float:right;font-weight:700;color:${m.tipo==='ENTRADA'?'#2e7d32':'#c62828'}">${sinal}${(m.qtd||0).toFixed(2)} ${m.unid||''}</span>
-      <div class="mov-meta">${m.destino||''} ∑ ${new Date(m.created_at).toLocaleString('pt-BR')}${m.saldo_apos!=null?' ∑ Saldo: '+m.saldo_apos.toFixed(2):''}</div>
+      <div class="mov-meta">${m.destino||''} ¬∑ ${new Date(m.created_at).toLocaleString('pt-BR')}${m.saldo_apos!=null?' ¬∑ Saldo: '+m.saldo_apos.toFixed(2):''}</div>
     </div>`;
   }).join('');
 }
 
 // ============================================================
-// PDF ó OS
+// PDF ‚Äî OS
 // ============================================================
 function gerarPDF_OS(d) {
   try {
@@ -484,7 +484,7 @@ function gerarPDF_OS(d) {
     const doc = new jsPDF();
     doc.setFillColor(27, 94, 32); doc.rect(0, 0, 210, 28, 'F');
     doc.setTextColor(255); doc.setFontSize(16);
-    doc.text('ORDEM DE PULVERIZA«√O', 105, 14, { align: 'center' });
+    doc.text('ORDEM DE PULVERIZA√á√ÉO', 105, 14, { align: 'center' });
     doc.setFontSize(9);
     doc.text(`${d.faz}  |  ${d.ha} ha  |  ${new Date().toLocaleString('pt-BR')}`, 105, 22, { align: 'center' });
     doc.setTextColor(40);
@@ -501,7 +501,7 @@ function gerarPDF_OS(d) {
 }
 
 // ============================================================
-// PDF ó RELAT”RIOS
+// PDF ‚Äî RELAT√ìRIOS
 // ============================================================
 async function relatorio(f) {
   if (!user) return;
@@ -509,9 +509,9 @@ async function relatorio(f) {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     let tit = ''; let cor = [0,0,0];
-    if (f==='INVENTARIO') { tit = 'ESTOQUE ATUAL ó INVENT¡RIO'; cor = [27,94,32]; }
-    else if (f==='SAIDA')      { tit = 'RELAT”RIO DE SAÕDAS';      cor = [13,71,161]; }
-    else if (f==='EMPRESTIMO') { tit = 'RELAT”RIO DE EMPR…STIMOS'; cor = [230,81,0]; }
+    if (f==='INVENTARIO') { tit = 'ESTOQUE ATUAL ‚Äî INVENT√ÅRIO'; cor = [27,94,32]; }
+    else if (f==='SAIDA')      { tit = 'RELAT√ìRIO DE SA√çDAS';      cor = [13,71,161]; }
+    else if (f==='EMPRESTIMO') { tit = 'RELAT√ìRIO DE EMPR√âSTIMOS'; cor = [230,81,0]; }
     doc.setFillColor(...cor); doc.rect(0, 0, 210, 20, 'F');
     doc.setTextColor(255); doc.setFontSize(13);
     doc.text(tit, 105, 13, { align: 'center' });
@@ -529,7 +529,7 @@ async function relatorio(f) {
         m.destino||''
       ]);
     }
-    if (body.length === 0) { alert('Nenhum dado para este relatÛrio.'); return; }
+    if (body.length === 0) { alert('Nenhum dado para este relat√≥rio.'); return; }
     doc.autoTable({ startY: 24, head, body, headStyles: { fillColor: cor }, theme: 'grid' });
     doc.save(`Relatorio_${f}.pdf`);
   } catch(e) { alert('Erro: ' + e.message); }
