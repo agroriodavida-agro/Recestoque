@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgroPro Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d1117;
+  --card: #161b22;
+  --border: #30363d;
+  --verde: #3fb950;
+  --azul: #58a6ff;
+  --laranja: #f78166;
+  --amarelo: #d29922;
+  --roxo: #bc8cff;
+  --txt: #e6edf3;
+  --txt2: #8b949e;
+  --danger: #f85149;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Syne', sans-serif; background: var(--bg); color: var(--txt); min-height: 100vh; }
+code, .mono { font-family: 'Space Mono', monospace; }
+
+/* LOGIN */
+#login-screen {
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at 20% 50%, #0f2a1a 0%, #0d1117 60%),
+              radial-gradient(ellipse at 80% 20%, #0a1628 0%, transparent 60%);
+}
+.login-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px;
+  width: 100%; max-width: 380px;
+  box-shadow: 0 0 60px rgba(63,185,80,.08), 0 20px 60px rgba(0,0,0,.5);
+}
+.login-logo { text-align: center; margin-bottom: 32px; }
+.login-logo h1 { font-size: 28px; font-weight: 800; color: var(--verde); letter-spacing: -1px; }
+.login-logo p { color: var(--txt2); font-size: 12px; margin-top: 4px; letter-spacing: 2px; text-transform: uppercase; }
+.lfield { margin-bottom: 16px; }
+.lfield label { font-size: 11px; font-weight: 700; color: var(--txt2); display: block; margin-bottom: 6px; letter-spacing: 1px; text-transform: uppercase; }
+.lfield input { width: 100%; padding: 12px 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--txt); font-size: 15px; font-family: 'Space Mono', monospace; transition: border-color .2s; }
+.lfield input:focus { outline: none; border-color: var(--verde); }
+.btn-login { width: 100%; padding: 13px; background: var(--verde); color: #0d1117; border: none; border-radius: 8px; font-weight: 800; font-size: 14px; cursor: pointer; letter-spacing: 1px; font-family: 'Syne', sans-serif; transition: opacity .2s; }
+.btn-login:hover { opacity: .85; }
+.login-err { color: var(--danger); font-size: 12px; text-align: center; margin-top: 10px; }
+
+/* APP */
+#app { display: none; }
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 24px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 100;
+}
+.topbar-brand { font-size: 16px; font-weight: 800; color: var(--verde); letter-spacing: -0.5px; }
+.topbar-brand span { color: var(--txt2); font-weight: 400; font-size: 12px; margin-left: 10px; }
+.btn-logout { background: transparent; border: 1px solid var(--border); color: var(--txt2); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; font-family: 'Syne', sans-serif; transition: all .2s; }
+.btn-logout:hover { border-color: var(--danger); color: var(--danger); }
+
+.nav {
+  display: flex; gap: 4px; padding: 12px 24px;
+  background: var(--card); border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+.nav-btn { padding: 8px 18px; border: 1px solid var(--border); border-radius: 20px; background: transparent; color: var(--txt2); font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; font-family: 'Syne', sans-serif; transition: all .2s; letter-spacing: .5px; }
+.nav-btn:hover { border-color: var(--azul); color: var(--azul); }
+.nav-btn.ativo { background: var(--azul); border-color: var(--azul); color: #0d1117; }
+
+.main { padding: 24px; max-width: 1200px; margin: auto; }
+
+/* CARDS SUMÁRIO */
+.summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 28px; }
+.sum-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; position: relative; overflow: hidden; }
+.sum-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+.sum-card.verde::before { background: var(--verde); }
+.sum-card.azul::before  { background: var(--azul); }
+.sum-card.laranja::before { background: var(--laranja); }
+.sum-card.roxo::before  { background: var(--roxo); }
+.sum-card .num { font-size: 32px; font-weight: 800; font-family: 'Space Mono', monospace; }
+.sum-card .lbl { font-size: 11px; color: var(--txt2); margin-top: 4px; letter-spacing: 1px; text-transform: uppercase; }
+.sum-card.verde .num { color: var(--verde); }
+.sum-card.azul .num  { color: var(--azul); }
+.sum-card.laranja .num { color: var(--laranja); }
+.sum-card.roxo .num  { color: var(--roxo); }
+
+/* SEÇÃO */
+.section { display: none; }
+.section.ativa { display: block; }
+.section-title { font-size: 18px; font-weight: 800; margin-bottom: 18px; display: flex; align-items: center; gap: 10px; }
+.section-title span { font-size: 12px; color: var(--txt2); font-weight: 400; }
+
+/* TABELA */
+.tbl-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead tr { background: #1c2128; }
+th { padding: 12px 16px; text-align: left; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--txt2); font-weight: 700; white-space: nowrap; }
+td { padding: 12px 16px; border-top: 1px solid var(--border); color: var(--txt); vertical-align: middle; }
+tr:hover td { background: rgba(255,255,255,.02); }
+.empty { padding: 40px; text-align: center; color: var(--txt2); font-size: 13px; }
+
+/* BADGE */
+.badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; letter-spacing: .5px; font-family: 'Space Mono', monospace; }
+.badge-entrada  { background: rgba(63,185,80,.15);  color: var(--verde); }
+.badge-saida    { background: rgba(248,81,73,.15);  color: var(--danger); }
+.badge-emprestimo { background: rgba(247,129,102,.15); color: var(--laranja); }
+
+/* FILTROS */
+.filtros { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
+.filtro-btn { padding: 6px 14px; border: 1px solid var(--border); border-radius: 15px; background: transparent; color: var(--txt2); font-size: 11px; font-weight: 700; cursor: pointer; font-family: 'Syne', sans-serif; transition: all .2s; }
+.filtro-btn.active { background: #222; color: var(--txt); border-color: #555; }
+.search-box { padding: 8px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--txt); font-size: 13px; font-family: 'Space Mono', monospace; width: 200px; }
+.search-box:focus { outline: none; border-color: var(--azul); }
+.count-lbl { margin-left: auto; font-size: 11px; color: var(--txt2); font-family: 'Space Mono'; }
+
+/* SALDO BADGE */
+.saldo-val { font-family: 'Space Mono', monospace; font-weight: 700; }
+.saldo-ok   { color: var(--verde); }
+.saldo-low  { color: var(--amarelo); }
+.saldo-zero { color: var(--danger); }
+
+/* LOADING */
+.loading-spin { text-align: center; padding: 40px; color: var(--txt2); font-size: 13px; }
+.loading-spin::after { content: ''; display: inline-block; width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--verde); border-radius: 50%; animation: spin .7s linear infinite; margin-left: 10px; vertical-align: middle; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* REFRESH */
+.btn-refresh { padding: 7px 14px; background: transparent; border: 1px solid var(--border); border-radius: 7px; color: var(--txt2); cursor: pointer; font-size: 12px; font-family: 'Syne', sans-serif; transition: all .2s; margin-left: 8px; }
+.btn-refresh:hover { border-color: var(--verde); color: var(--verde); }
+
+/* RESPONSIVE */
+@media (max-width: 600px) {
+  .main { padding: 14px; }
+  .topbar { padding: 12px 14px; }
+  .nav { padding: 10px 14px; }
+  .summary-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <h1>🌿 AgroPro</h1>
+      <p>Painel Administrativo</p>
+    </div>
+    <div class="lfield">
+      <label>Senha de Acesso</label>
+      <input type="password" id="adminSenha" placeholder="••••••••" onkeydown="if(event.key==='Enter')entrarAdmin()">
+    </div>
+    <button class="btn-login" onclick="entrarAdmin()">ACESSAR PAINEL</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-brand">🌿 AgroPro Admin <span id="last-update"></span></div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn-refresh" onclick="carregarTudo()">⟳ Atualizar</button>
+      <button class="btn-logout" onclick="sairAdmin()">Sair</button>
+    </div>
+  </div>
+
+  <div class="nav">
+    <button class="nav-btn ativo" onclick="irPara('dashboard')">📊 Dashboard</button>
+    <button class="nav-btn" onclick="irPara('estoque')">📦 Estoque</button>
+    <button class="nav-btn" onclick="irPara('movimentacoes')">🔄 Movimentações</button>
+    <button class="nav-btn" onclick="irPara('os')">📋 Receituários</button>
+    <button class="nav-btn" onclick="irPara('usuarios')">👥 Usuários</button>
+  </div>
+
+  <div class="main">
+
+    <!-- DASHBOARD -->
+    <div id="sec-dashboard" class="section ativa">
+      <div class="summary-grid" id="summary-cards">
+        <div class="sum-card verde"><div class="num" id="s-produtos">—</div><div class="lbl">Produtos no Estoque</div></div>
+        <div class="sum-card azul"><div class="num" id="s-movs">—</div><div class="lbl">Movimentações</div></div>
+        <div class="sum-card laranja"><div class="num" id="s-os">—</div><div class="lbl">OS Geradas</div></div>
+        <div class="sum-card roxo"><div class="num" id="s-users">—</div><div class="lbl">Usuários</div></div>
+      </div>
+
+      <div class="section-title">Últimas Movimentações</div>
+      <div class="tbl-wrap" id="dash-movs"><div class="loading-spin">Carregando</div></div>
+    </div>
+
+    <!-- ESTOQUE -->
+    <div id="sec-estoque" class="section">
+      <div class="section-title">📦 Estoque <span id="est-sub"></span></div>
+      <div class="filtros">
+        <input class="search-box" id="est-search" placeholder="Buscar produto..." oninput="filtrarEstoque()">
+        <span class="count-lbl" id="est-count"></span>
+      </div>
+      <div class="tbl-wrap" id="tbl-estoque"><div class="loading-spin">Carregando</div></div>
+    </div>
+
+    <!-- MOVIMENTAÇÕES -->
+    <div id="sec-movimentacoes" class="section">
+      <div class="section-title">🔄 Movimentações <span id="mov-sub"></span></div>
+      <div class="filtros">
+        <button class="filtro-btn active" onclick="filtrarMovs('TODOS',this)">Todos</button>
+        <button class="filtro-btn" onclick="filtrarMovs('ENTRADA',this)">Entradas</button>
+        <button class="filtro-btn" onclick="filtrarMovs('SAIDA',this)">Saídas</button>
+        <button class="filtro-btn" onclick="filtrarMovs('EMPRESTIMO',this)">Empréstimos</button>
+        <input class="search-box" id="mov-search" placeholder="Buscar..." oninput="renderMovsFiltrado()">
+        <span class="count-lbl" id="mov-count"></span>
+      </div>
+      <div class="tbl-wrap" id="tbl-movs"><div class="loading-spin">Carregando</div></div>
+    </div>
+
+    <!-- OS -->
+    <div id="sec-os" class="section">
+      <div class="section-title">📋 Receituários / OS <span id="os-sub"></span></div>
+      <div class="filtros">
+        <input class="search-box" id="os-search" placeholder="Buscar fazenda..." oninput="filtrarOS()">
+        <span class="count-lbl" id="os-count"></span>
+      </div>
+      <div class="tbl-wrap" id="tbl-os"><div class="loading-spin">Carregando</div></div>
+    </div>
+
+    <!-- USUÁRIOS -->
+    <div id="sec-usuarios" class="section">
+      <div class="section-title">👥 Usuários Cadastrados <span id="usr-sub"></span></div>
+      <div class="tbl-wrap" id="tbl-usuarios"><div class="loading-spin">Carregando</div></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── CONFIG ───────────────────────────────────────────────
+const ADMIN_SENHA = 'agropro@admin2025'; // ← ALTERE AQUI
+const SUPA_URL = 'https://gtsiamlpldvvapboeaxi.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0c2lhbWxwbGR2dmFwYm9lYXhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwMzE3NDEsImV4cCI6MjA5MDYwNzc0MX0.aUsp60M0dHb4g96yuYVUHOf9bDCjOjj9rUihOKvA5i4';
+
+const { createClient } = supabase;
+const sb = createClient(SUPA_URL, SUPA_KEY);
+
+let dadosEstoque = [];
+let dadosMovs    = [];
+let dadosOS      = [];
+let dadosUsers   = [];
+let filtroMovAtual = 'TODOS';
+let secaoAtual = 'dashboard';
+
+// ── LOGIN ─────────────────────────────────────────────────
+function entrarAdmin() {
+  const s = document.getElementById('adminSenha').value;
+  if (s === ADMIN_SENHA) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    carregarTudo();
+  } else {
+    document.getElementById('login-err').textContent = '❌ Senha incorreta.';
+    document.getElementById('adminSenha').value = '';
+  }
+}
+
+function sairAdmin() {
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('adminSenha').value = '';
+  document.getElementById('login-err').textContent = '';
+}
+
+// ── NAVEGAÇÃO ─────────────────────────────────────────────
+function irPara(s) {
+  secaoAtual = s;
+  document.querySelectorAll('.section').forEach(x => x.classList.remove('ativa'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('ativo'));
+  document.getElementById('sec-' + s).classList.add('ativa');
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    if (b.textContent.toLowerCase().includes(s === 'os' ? 'receit' : s === 'dashboard' ? 'dash' : s.substring(0,4))) b.classList.add('ativo');
+  });
+  // re-set nav ativos por index
+  const mapa = { dashboard: 0, estoque: 1, movimentacoes: 2, os: 3, usuarios: 4 };
+  document.querySelectorAll('.nav-btn').forEach((b,i) => b.classList.toggle('ativo', i === mapa[s]));
+}
+
+// ── CARREGAR ──────────────────────────────────────────────
+async function carregarTudo() {
+  document.getElementById('last-update').textContent = 'Carregando...';
+  await Promise.all([carregarEstoque(), carregarMovs(), carregarOS(), carregarUsuarios()]);
+  atualizarSummary();
+  renderDashMovs();
+  document.getElementById('last-update').textContent =
+    'Atualizado às ' + new Date().toLocaleTimeString('pt-BR');
+}
+
+async function carregarEstoque() {
+  const { data } = await sb.from('estoque').select('*').order('nome');
+  dadosEstoque = data || [];
+  renderEstoque();
+}
+
+async function carregarMovs() {
+  const { data } = await sb.from('movimentacoes').select('*').order('created_at', { ascending: false }).limit(500);
+  dadosMovs = data || [];
+  renderMovsFiltrado();
+}
+
+async function carregarOS() {
+  const { data } = await sb.from('receituarios').select('*').order('created_at', { ascending: false });
+  dadosOS = data || [];
+  renderOS();
+}
+
+async function carregarUsuarios() {
+  // Busca users únicos via movimentações + estoque
+  const emails = new Set();
+  const { data: movData } = await sb.from('movimentacoes').select('user_id, created_at').order('created_at');
+  const { data: estData } = await sb.from('estoque').select('user_id');
+  const { data: osData }  = await sb.from('receituarios').select('user_id, created_at').order('created_at');
+
+  const userMap = {};
+  [...(movData||[]), ...(estData||[]), ...(osData||[])].forEach(r => {
+    if (r.user_id && !userMap[r.user_id]) userMap[r.user_id] = { id: r.user_id, first_seen: r.created_at };
+  });
+  dadosUsers = Object.values(userMap);
+  renderUsuarios();
+}
+
+// ── SUMMARY ───────────────────────────────────────────────
+function atualizarSummary() {
+  document.getElementById('s-produtos').textContent = dadosEstoque.length;
+  document.getElementById('s-movs').textContent     = dadosMovs.length;
+  document.getElementById('s-os').textContent       = dadosOS.length;
+  document.getElementById('s-users').textContent    = dadosUsers.length;
+}
+
+// ── DASH MOVS ─────────────────────────────────────────────
+function renderDashMovs() {
+  const ultimas = dadosMovs.slice(0, 20);
+  const div = document.getElementById('dash-movs');
+  if (!ultimas.length) { div.innerHTML = '<div class="empty">Nenhuma movimentação.</div>'; return; }
+  div.innerHTML = `<table>
+    <thead><tr><th>Tipo</th><th>Produto</th><th>Qtd</th><th>Destino</th><th>Quem Retirou</th><th>Data</th></tr></thead>
+    <tbody>${ultimas.map(m => `
+      <tr>
+        <td><span class="badge badge-${m.tipo?.toLowerCase()}">${m.tipo}</span></td>
+        <td><b>${m.nome||'-'}</b></td>
+        <td class="mono">${(m.qtd||0).toFixed(2)} ${m.unid||''}</td>
+        <td>${m.destino||'—'}</td>
+        <td>${m.quem_retirou ? '<span style="color:var(--azul)">👤 '+m.quem_retirou+'</span>' : '—'}</td>
+        <td style="color:var(--txt2);font-size:11px">${new Date(m.created_at).toLocaleString('pt-BR')}</td>
+      </tr>`).join('')}
+    </tbody></table>`;
+}
+
+// ── ESTOQUE ───────────────────────────────────────────────
+function renderEstoque(dados) {
+  const lista = dados || dadosEstoque;
+  document.getElementById('est-count').textContent = lista.length + ' produtos';
+  const div = document.getElementById('tbl-estoque');
+  if (!lista.length) { div.innerHTML = '<div class="empty">Estoque vazio.</div>'; return; }
+  div.innerHTML = `<table>
+    <thead><tr><th>#</th><th>Produto</th><th>Saldo</th><th>Unidade</th><th>User ID</th></tr></thead>
+    <tbody>${lista.map((e,i) => {
+      const cls = e.qtd <= 0 ? 'saldo-zero' : e.qtd < 5 ? 'saldo-low' : 'saldo-ok';
+      return `<tr>
+        <td style="color:var(--txt2);font-family:'Space Mono'">${i+1}</td>
+        <td><b>${e.nome}</b></td>
+        <td><span class="saldo-val ${cls}">${(e.qtd||0).toFixed(2)}</span></td>
+        <td>${e.unid||'—'}</td>
+        <td style="font-size:10px;color:var(--txt2);font-family:'Space Mono'">${(e.user_id||'').substring(0,8)}…</td>
+      </tr>`;
+    }).join('')}
+    </tbody></table>`;
+}
+
+function filtrarEstoque() {
+  const q = document.getElementById('est-search').value.toLowerCase();
+  renderEstoque(dadosEstoque.filter(e => e.nome.toLowerCase().includes(q)));
+}
+
+// ── MOVIMENTAÇÕES ─────────────────────────────────────────
+function filtrarMovs(f, btn) {
+  filtroMovAtual = f;
+  document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderMovsFiltrado();
+}
+
+function renderMovsFiltrado() {
+  const q    = (document.getElementById('mov-search')?.value || '').toLowerCase();
+  const tipo = filtroMovAtual;
+  let lista  = dadosMovs;
+  if (tipo !== 'TODOS') lista = lista.filter(m => m.tipo === tipo);
+  if (q) lista = lista.filter(m => (m.nome||'').toLowerCase().includes(q) || (m.destino||'').toLowerCase().includes(q) || (m.quem_retirou||'').toLowerCase().includes(q));
+
+  document.getElementById('mov-count').textContent = lista.length + ' registros';
+  const div = document.getElementById('tbl-movs');
+  if (!lista.length) { div.innerHTML = '<div class="empty">Nenhuma movimentação encontrada.</div>'; return; }
+
+  div.innerHTML = `<table>
+    <thead><tr><th>Tipo</th><th>Produto</th><th>Qtd</th><th>Unid</th><th>Destino</th><th>👤 Quem Retirou</th><th>Saldo Após</th><th>Data</th></tr></thead>
+    <tbody>${lista.map(m => `
+      <tr>
+        <td><span class="badge badge-${m.tipo?.toLowerCase()}">${m.tipo}</span></td>
+        <td><b>${m.nome||'—'}</b></td>
+        <td class="mono">${(m.qtd||0).toFixed(2)}</td>
+        <td style="color:var(--txt2)">${m.unid||'—'}</td>
+        <td>${m.destino||'—'}</td>
+        <td>${m.quem_retirou ? '<span style="color:var(--azul);font-weight:600">'+m.quem_retirou+'</span>' : '<span style="color:var(--txt2)">—</span>'}</td>
+        <td class="mono" style="color:var(--txt2)">${m.saldo_apos != null ? m.saldo_apos.toFixed(2) : '—'}</td>
+        <td style="font-size:11px;color:var(--txt2)">${new Date(m.created_at).toLocaleString('pt-BR')}</td>
+      </tr>`).join('')}
+    </tbody></table>`;
+}
+
+// ── OS ────────────────────────────────────────────────────
+function renderOS(dados) {
+  const lista = dados || dadosOS;
+  document.getElementById('os-count').textContent = lista.length + ' OS';
+  const div = document.getElementById('tbl-os');
+  if (!lista.length) { div.innerHTML = '<div class="empty">Nenhuma OS encontrada.</div>'; return; }
+
+  div.innerHTML = `<table>
+    <thead><tr><th>Fazenda</th><th>Área (ha)</th><th>Tanque</th><th>Produtos</th><th>Obs</th><th>Data</th></tr></thead>
+    <tbody>${lista.map(r => {
+      const prods = Array.isArray(r.produtos) ? r.produtos : [];
+      const nomes = prods.map(p => p.n || p.nome || '?').join(', ');
+      return `<tr>
+        <td><b>${r.fazenda||'—'}</b></td>
+        <td class="mono">${r.area||'—'}</td>
+        <td class="mono">${r.tanque||'—'} L</td>
+        <td style="font-size:11px;max-width:200px">${nomes || '—'}</td>
+        <td style="font-size:11px;color:var(--txt2)">${r.obs||'—'}</td>
+        <td style="font-size:11px;color:var(--txt2)">${new Date(r.created_at).toLocaleString('pt-BR')}</td>
+      </tr>`;
+    }).join('')}
+    </tbody></table>`;
+}
+
+function filtrarOS() {
+  const q = document.getElementById('os-search').value.toLowerCase();
+  renderOS(dadosOS.filter(r => (r.fazenda||'').toLowerCase().includes(q)));
+}
+
+// ── USUÁRIOS ──────────────────────────────────────────────
+function renderUsuarios() {
+  document.getElementById('usr-sub').textContent = dadosUsers.length + ' cadastrados';
+  const div = document.getElementById('tbl-usuarios');
+  if (!dadosUsers.length) { div.innerHTML = '<div class="empty">Nenhum usuário encontrado.</div>'; return; }
+
+  div.innerHTML = `<table>
+    <thead><tr><th>#</th><th>User ID</th><th>Movimentações</th><th>Itens no Estoque</th><th>OS Geradas</th><th>Primeiro Acesso</th></tr></thead>
+    <tbody>${dadosUsers.map((u, i) => {
+      const movs = dadosMovs.filter(m => m.user_id === u.id).length;
+      const est  = dadosEstoque.filter(e => e.user_id === u.id).length;
+      const os   = dadosOS.filter(o => o.user_id === u.id).length;
+      return `<tr>
+        <td style="color:var(--txt2);font-family:'Space Mono'">${i+1}</td>
+        <td style="font-family:'Space Mono';font-size:11px">${u.id}</td>
+        <td><span style="color:var(--azul);font-weight:700">${movs}</span></td>
+        <td><span style="color:var(--verde);font-weight:700">${est}</span></td>
+        <td><span style="color:var(--laranja);font-weight:700">${os}</span></td>
+        <td style="font-size:11px;color:var(--txt2)">${u.first_seen ? new Date(u.first_seen).toLocaleDateString('pt-BR') : '—'}</td>
+      </tr>`;
+    }).join('')}
+    </tbody></table>`;
+}
+</script>
+</body>
+</html>

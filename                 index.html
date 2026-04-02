@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AgroPro</title>
+
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#1b5e20">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AgroPro">
+<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2765/2765011.png">
+
+<meta property="og:title" content="AgroPro">
+<meta property="og:description" content="Receituário e Estoque Agrícola na Nuvem">
+<meta property="og:image" content="https://cdn-icons-png.flaticon.com/512/2765/2765011.png">
+<meta property="og:type" content="website">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+:root{--verde:#1b5e20;--azul:#0d47a1;--erro:#d32f2f;--bg:#f4f7f6;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0;}
+body{font-family:sans-serif;background:var(--bg);padding-bottom:70px;}
+
+/* AUTH */
+.auth-screen{min-height:100vh;background:linear-gradient(160deg,#0a2e0b,#1b5e20 60%,#0d47a1);display:flex;align-items:center;justify-content:center;padding:20px;}
+.auth-box{background:white;border-radius:16px;padding:28px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+.auth-logo{text-align:center;margin-bottom:20px;}
+.auth-logo h2{font-size:1.5rem;font-weight:800;color:var(--verde);}
+.auth-logo p{color:#666;font-size:12px;margin-top:3px;}
+.auth-tabs{display:flex;background:#f0f0f0;border-radius:8px;padding:3px;margin-bottom:16px;}
+.auth-tab{flex:1;padding:7px;text-align:center;border:none;background:transparent;border-radius:6px;cursor:pointer;font-weight:700;font-size:12px;color:#666;transition:all .2s;}
+.auth-tab.active{background:white;color:var(--verde);box-shadow:0 1px 6px rgba(0,0,0,.1);}
+.afield{margin-bottom:12px;}
+.afield label{font-size:10px;font-weight:700;color:#555;display:block;margin-bottom:4px;text-transform:uppercase;}
+.afield input{width:100%;padding:12px 13px;border:1.5px solid #ddd;border-radius:8px;font-size:15px;}
+.afield input:focus{outline:none;border-color:var(--verde);}
+.btn-auth{width:100%;padding:13px;border:none;border-radius:8px;background:var(--verde);color:white;font-weight:700;font-size:14px;cursor:pointer;margin-top:4px;}
+.btn-auth:disabled{opacity:.6;cursor:not-allowed;}
+.auth-msg{padding:9px 12px;border-radius:7px;font-size:12px;margin-top:10px;text-align:center;}
+.auth-msg.err{background:#ffebee;color:#c62828;border:1px solid #ef9a9a;}
+.auth-msg.ok{background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7;}
+.hidden{display:none!important;}
+
+/* INSTALL BANNER */
+#install-banner{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--verde);color:white;padding:12px 16px;z-index:9999;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 -2px 12px rgba(0,0,0,.2);}
+#install-banner p{font-size:13px;font-weight:600;flex:1;}
+#install-banner button{padding:8px 16px;border:none;border-radius:20px;font-weight:700;font-size:12px;cursor:pointer;}
+#btn-instalar{background:white;color:var(--verde);}
+#btn-fechar-banner{background:transparent;color:rgba(255,255,255,.7);font-size:18px;}
+
+/* APP */
+#app{display:none;}
+.topbar{display:flex;align-items:center;justify-content:space-between;background:#222;padding:8px 12px;position:sticky;top:0;z-index:1000;}
+.topbar-left{color:white;font-size:12px;opacity:.8;font-weight:600;}
+.topbar-right{display:flex;align-items:center;gap:6px;}
+.sync-txt{font-size:10px;color:rgba(255,255,255,.6);}
+.btn-sair{background:rgba(255,255,255,.12);border:none;color:white;padding:4px 10px;border-radius:15px;font-size:11px;cursor:pointer;font-weight:600;}
+
+.tabs{display:flex;background:#222;}
+.tab{flex:1;padding:16px 5px;text-align:center;color:white;border:none;font-weight:bold;font-size:12px;text-transform:uppercase;background:transparent;opacity:.5;cursor:pointer;}
+.tab.ativa-rec{opacity:1;background:var(--verde);border-bottom:4px solid #fff;}
+.tab.ativa-est{opacity:1;background:var(--azul);border-bottom:4px solid #fff;}
+.tab.ativa-mov{opacity:1;background:#6a1b9a;border-bottom:4px solid #fff;}
+
+.container{max-width:500px;margin:auto;padding:12px;}
+.card{background:white;padding:15px;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.08);margin-bottom:14px;border-top:5px solid #ddd;}
+.tema-rec{border-top-color:var(--verde);}
+.tema-est{border-top-color:var(--azul);}
+.tema-mov{border-top-color:#6a1b9a;}
+
+h3{font-size:14px;margin-bottom:10px;color:#333;border-bottom:1px solid #eee;padding-bottom:5px;}
+label{font-size:11px;font-weight:bold;color:#555;display:block;margin-top:8px;}
+input,select,textarea{width:100%;padding:13px;border:1px solid #ccc;border-radius:8px;font-size:16px;margin-top:4px;background:#fff;-webkit-appearance:none;}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--verde);}
+
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+
+.box-info{background:#f1f8e9;padding:12px;border-radius:10px;display:flex;justify-content:space-around;margin:12px 0;border:1px solid #dcedc8;}
+.box-info b{display:block;font-size:17px;color:var(--verde);text-align:center;}
+.box-info span{font-size:10px;color:#666;}
+
+.btn{padding:14px;border:none;border-radius:8px;font-weight:bold;width:100%;cursor:pointer;font-size:13px;color:white;text-transform:uppercase;margin-top:8px;}
+.btn:disabled{opacity:.6;cursor:not-allowed;}
+.btn-verde{background:var(--verde);}
+.btn-azul{background:var(--azul);}
+.btn-sm-rel{background:#fff;color:var(--azul);border:2px solid var(--azul);padding:10px 2px;border-radius:6px;font-size:10px;font-weight:bold;flex:1;cursor:pointer;}
+
+table{width:100%;border-collapse:collapse;margin-top:8px;}
+td{padding:10px 4px;border-bottom:1px solid #f0f0f0;font-size:13px;}
+
+.item-lista{background:#fff;padding:13px;border-radius:8px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;border-left:5px solid var(--azul);}
+.btn-del{color:var(--erro);background:none;border:none;font-size:20px;font-weight:bold;cursor:pointer;padding:4px 8px;}
+
+.mov-item{background:white;padding:12px;border-radius:8px;margin-bottom:8px;border-left:5px solid #aaa;font-size:13px;}
+.mov-entrada{border-left-color:#2e7d32;}
+.mov-saida{border-left-color:#c62828;}
+.mov-emprestimo{border-left-color:#e65100;}
+.mov-meta{font-size:10px;color:#888;margin-top:3px;}
+
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;}
+.badge-entrada{background:#e8f5e9;color:#2e7d32;}
+.badge-saida{background:#ffebee;color:#c62828;}
+.badge-emprestimo{background:#fff3e0;color:#e65100;}
+
+.view{display:none;}
+.active-view{display:block!important;}
+.loading{padding:20px;text-align:center;color:#888;font-size:13px;}
+.alerta-sem-est{color:#c62828;font-size:11px;font-weight:700;}
+
+.filtro-bar{display:flex;gap:5px;margin-bottom:10px;flex-wrap:wrap;}
+.fbtn{padding:5px 10px;border:1.5px solid #ddd;border-radius:15px;background:white;font-size:11px;font-weight:600;cursor:pointer;color:#666;}
+.fbtn.active{background:#222;color:white;border-color:#222;}
+
+.offline-bar{display:none;background:#e65100;color:white;text-align:center;padding:6px;font-size:12px;font-weight:600;}
+</style>
+</head>
+<body>
+
+<!-- OFFLINE BAR -->
+<div class="offline-bar" id="offline-bar"> Você está offline — dados salvos localmente</div>
+
+<!-- INSTALL BANNER -->
+<div id="install-banner">
+  <p> Instalar AgroPro no seu celular</p>
+  <button id="btn-instalar" onclick="instalarPWA()">INSTALAR</button>
+  <button id="btn-fechar-banner" onclick="fecharBanner()"></button>
+</div>
+
+<!-- AUTH -->
+<div id="auth-screen" class="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <h2> AgroPro</h2>
+      <p>Receituário · Estoque · Nuvem</p>
+    </div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchTab('login')">Entrar</button>
+      <button class="auth-tab" onclick="switchTab('signup')">Cadastrar</button>
+    </div>
+    <div class="afield"><label>E-mail</label><input type="email" id="aEmail" placeholder="seu@email.com" autocomplete="email"></div>
+    <div class="afield"><label>Senha</label><input type="password" id="aSenha" placeholder="••••••••" autocomplete="current-password"></div>
+    <div class="afield hidden" id="f-nome"><label>Nome</label><input type="text" id="aNome" placeholder="Seu nome"></div>
+    <button class="btn-auth" id="btnAuth" onclick="handleAuth()">ENTRAR</button>
+    <div id="auth-msg"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-left"> AgroPro — <span id="chip-user"></span></div>
+    <div class="topbar-right">
+      <span class="sync-txt" id="sync-txt"> online</span>
+      <button class="btn-sair" onclick="logout()">Sair</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button id="tab-rec" class="tab ativa-rec" onclick="mudar('rec')"> Receita</button>
+    <button id="tab-est" class="tab" onclick="mudar('est')"> Estoque</button>
+    <button id="tab-mov" class="tab" onclick="mudar('mov')"> Movim.</button>
+  </div>
+
+  <div class="container">
+
+    <!-- RECEITUÁRIO -->
+    <div id="v-rec" class="view active-view">
+      <div class="card tema-rec">
+        <h3> Área e Calda</h3>
+        <label>Fazenda / Talhão</label>
+        <input type="text" id="faz" placeholder="Ex: Fazenda Santa Fé">
+        <div class="grid-3">
+          <div><label>Área (ha)</label><input type="number" id="ha" oninput="calc()"></div>
+          <div><label>Tanque (L)</label><input type="number" id="tq" value="2000" oninput="calc()"></div>
+          <div><label>Vazão (L/ha)</label><input type="number" id="vz" value="100" oninput="calc()"></div>
+        </div>
+        <div class="box-info">
+          <div><span>CALDA TOTAL</span><b id="res-calda">0 L</b></div>
+          <div><span>TANQUES</span><b id="res-tanque">0</b></div>
+          <div><span>ÚLTIMO TQ</span><b id="res-resto">0 L</b></div>
+        </div>
+      </div>
+
+      <div class="card tema-rec">
+        <h3> Produtos</h3>
+        <label>Produto <small style="color:#888;font-weight:normal">(estoque ou qualquer nome)</small></label>
+        <input type="text" id="pNom" list="sug" placeholder="Digite ou selecione do estoque" oninput="checarEstoque()">
+        <datalist id="sug"></datalist>
+        <div id="info-est-prod" style="font-size:11px;margin-top:4px;min-height:16px;"></div>
+        <div class="grid-2">
+          <div><label>Dose</label><input type="number" id="pDos" placeholder="Dose"></div>
+          <div><label>Unidade</label><select id="pUni"><option>L/ha</option><option>kg/ha</option><option>ml/ha</option><option>g/ha</option></select></div>
+        </div>
+        <button class="btn btn-verde" onclick="addP()">+ ADICIONAR PRODUTO</button>
+        <table><tbody id="lista-p"></tbody></table>
+        <label>Observações</label>
+        <textarea id="obs_r" rows="2" placeholder="Opcional..."></textarea>
+        <button class="btn btn-verde" style="background:#2e7d32;margin-top:12px" id="btnSalvarOS" onclick="salvarR()"> GERAR OS E BAIXAR ESTOQUE</button>
+      </div>
+
+      <div class="card tema-rec">
+        <h3> OS Salvas</h3>
+        <div id="lista-os"><div class="loading">Carregando...</div></div>
+      </div>
+    </div>
+
+    <!-- ESTOQUE -->
+    <div id="v-est" class="view">
+      <div class="card tema-est">
+        <h3> Lançar Movimento</h3>
+        <label>Tipo</label>
+        <select id="eTip" onchange="ajustarMotivo()">
+          <option value="ENTRADA"> ENTRADA</option>
+          <option value="SAIDA"> SAÍDA</option>
+          <option value="EMPRESTIMO"> EMPRÉSTIMO</option>
+        </select>
+        <label>Produto</label>
+        <input type="text" id="eNom" placeholder="Nome do Produto">
+        <div class="grid-2">
+          <div><label>Quantidade</label><input type="number" id="eQtd" placeholder="Qtd"></div>
+          <div><label>Unidade</label><select id="eUni"><option>L</option><option>kg</option><option>ml</option><option>g</option></select></div>
+        </div>
+        <div id="div-des" style="display:none">
+          <label id="lbl-motivo">Destino / Pessoa</label>
+          <input type="text" id="eDes" placeholder="Para onde vai?">
+        </div>
+        <button class="btn btn-azul" id="btnRegEstoque" onclick="regEstoque()"> SALVAR NO ESTOQUE</button>
+      </div>
+
+      <div class="card tema-est">
+        <h3> Relatórios PDF</h3>
+        <div style="display:flex;gap:5px;margin-bottom:12px;">
+          <button class="btn-sm-rel" onclick="relatorio('INVENTARIO')">ESTOQUE</button>
+          <button class="btn-sm-rel" onclick="relatorio('SAIDA')">SAÍDAS</button>
+          <button class="btn-sm-rel" onclick="relatorio('EMPRESTIMO')">EMPRÉST.</button>
+        </div>
+        <h3> Saldos Atuais</h3>
+        <div id="saldos-e"><div class="loading">Carregando...</div></div>
+      </div>
+    </div>
+
+    <!-- MOVIMENTAÇÕES -->
+    <div id="v-mov" class="view">
+      <div class="card tema-mov">
+        <h3> Histórico de Movimentações</h3>
+        <div class="filtro-bar">
+          <button class="fbtn active" onclick="setFiltro('TODOS',this)">Todos</button>
+          <button class="fbtn" onclick="setFiltro('ENTRADA',this)">Entradas</button>
+          <button class="fbtn" onclick="setFiltro('SAIDA',this)">Saídas</button>
+          <button class="fbtn" onclick="setFiltro('EMPRESTIMO',this)">Empréstimos</button>
+        </div>
+        <div id="lista-movs"><div class="loading">Carregando...</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="./app.js"></script>
+</body>
+</html>
