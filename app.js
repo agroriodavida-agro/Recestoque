@@ -478,29 +478,59 @@ async function renderMovs() {
 // ============================================================
 // PDF — OS
 // ============================================================
-function gerarPDF_OS(d) {
+
+
+//function gerarPDF_OS(d) {
   try {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-    doc.setFillColor(27, 94, 32); doc.rect(0, 0, 210, 28, 'F');
-    doc.setTextColor(255); doc.setFontSize(16);
-    doc.text('ORDEM DE PULVERIZAÇÃO', 105, 14, { align: 'center' });
+
+    // --- CABEÇALHO PERSONALIZADO: MARCOS LEAL FERNANDES ---
+    doc.setFillColor(27, 94, 32); // Verde Escuro
+    doc.rect(0, 0, 210, 28, 'F');
+
+    doc.setTextColor(255);
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text('MARCOS LEAL FERNANDES', 105, 10, { align: 'center' });
+    
+    doc.setFontSize(10);
+    doc.text('FAZENDA BACABAL - ORDEM DE PULVERIZACAO', 105, 18, { align: 'center' });
+
     doc.setFontSize(9);
-    doc.text(`${d.faz}  |  ${d.ha} ha  |  ${new Date().toLocaleString('pt-BR')}`, 105, 22, { align: 'center' });
+    doc.text(`${d.faz} | ${d.ha} ha | ${new Date().toLocaleString('pt-BR')}`, 105, 24, { align: 'center' });
+
+    // --- CORPO DO RELATÓRIO ---
     doc.setTextColor(40);
     const corpo = d.itens.map(p => [
-      p.n + (p.noEstoque ? '' : '  S/EST'),
+      p.n + (p.noEstoque ? '' : ' - S/EST'),
       p.d + ' ' + p.u,
       ((p.d * d.t) / d.v).toFixed(2),
       (p.d * d.ha).toFixed(2)
     ]);
-    doc.autoTable({ startY: 33, head: [['PRODUTO','DOSE/HA','POR TANQUE','TOTAL']], body: corpo, headStyles: { fillColor: [27,94,32] }, theme: 'grid' });
-    if (d.obs) doc.text('OBS: ' + d.obs, 15, doc.lastAutoTable.finalY + 8);
-    doc.save(`OS_${d.faz.replace(/\s/g,'_')}.pdf`);
-  } catch(e) { alert('Erro PDF: ' + e.message); }
-}
 
-// ============================================================
+    doc.autoTable({
+      startY: 33,
+      head: [['PRODUTO', 'DOSE/HA', 'POR TANQUE', 'TOTAL']],
+      body: corpo,
+      headStyles: { fillColor: [27, 94, 32] },
+      theme: 'grid'
+    });
+
+    if (d.obs) {
+      doc.setFontSize(10);
+      doc.text('OBS: ' + d.obs, 15, doc.lastAutoTable.finalY + 8);
+    }
+
+    // Salva o arquivo com o nome da fazenda
+    doc.save(`OS_Bacabal_${d.faz}_${new Date().getTime()}.pdf`);
+
+  } catch (e) {
+    console.error("Erro ao gerar PDF:", e);
+    alert("Erro ao gerar o PDF da OS.");
+  }
+}
+ ============================================================
 // PDF — RELATÓRIOS
 // ============================================================
 async function relatorio(f) {
