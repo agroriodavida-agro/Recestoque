@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AgroPro</title>
+
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#1b5e20">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AgroPro">
+<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2765/2765011.png">
+
+<meta property="og:title" content="AgroPro">
+<meta property="og:description" content="Receituário e Estoque Agrícola na Nuvem">
+<meta property="og:image" content="https://cdn-icons-png.flaticon.com/512/2765/2765011.png">
+<meta property="og:type" content="website">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+:root{--verde:#1b5e20;--azul:#0d47a1;--erro:#d32f2f;--bg:#f4f7f6;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0;}
+body{font-family:sans-serif;background:var(--bg);padding-bottom:70px;}
+
+/* AUTH */
+.auth-screen{min-height:100vh;background:linear-gradient(160deg,#0a2e0b,#1b5e20 60%,#0d47a1);display:flex;align-items:center;justify-content:center;padding:20px;}
+.auth-box{background:white;border-radius:16px;padding:28px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+.auth-logo{text-align:center;margin-bottom:20px;}
+.auth-logo h2{font-size:1.5rem;font-weight:800;color:var(--verde);}
+.auth-logo p{color:#666;font-size:12px;margin-top:3px;}
+.auth-tabs{display:flex;background:#f0f0f0;border-radius:8px;padding:3px;margin-bottom:16px;}
+.auth-tab{flex:1;padding:7px;text-align:center;border:none;background:transparent;border-radius:6px;cursor:pointer;font-weight:700;font-size:12px;color:#666;transition:all .2s;}
+.auth-tab.active{background:white;color:var(--verde);box-shadow:0 1px 6px rgba(0,0,0,.1);}
+.afield{margin-bottom:12px;}
+.afield label{font-size:10px;font-weight:700;color:#555;display:block;margin-bottom:4px;text-transform:uppercase;}
+.afield input{width:100%;padding:12px 13px;border:1.5px solid #ddd;border-radius:8px;font-size:15px;}
+.afield input:focus{outline:none;border-color:var(--verde);}
+.btn-auth{width:100%;padding:13px;border:none;border-radius:8px;background:var(--verde);color:white;font-weight:700;font-size:14px;cursor:pointer;margin-top:4px;}
+.btn-auth:disabled{opacity:.6;cursor:not-allowed;}
+.auth-msg{padding:9px 12px;border-radius:7px;font-size:12px;margin-top:10px;text-align:center;}
+.auth-msg.err{background:#ffebee;color:#c62828;border:1px solid #ef9a9a;}
+.auth-msg.ok{background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7;}
+.hidden{display:none!important;}
+
+/* INSTALL BANNER */
+#install-banner{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--verde);color:white;padding:12px 16px;z-index:9999;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 -2px 12px rgba(0,0,0,.2);}
+#install-banner p{font-size:13px;font-weight:600;flex:1;}
+#install-banner button{padding:8px 16px;border:none;border-radius:20px;font-weight:700;font-size:12px;cursor:pointer;}
+#btn-instalar{background:white;color:var(--verde);}
+#btn-fechar-banner{background:transparent;color:rgba(255,255,255,.7);font-size:18px;}
+
+/* APP */
+#app{display:none;}
+.topbar{display:flex;align-items:center;justify-content:space-between;background:#222;padding:8px 12px;position:sticky;top:0;z-index:1000;}
+.topbar-left{color:white;font-size:12px;opacity:.8;font-weight:600;}
+.topbar-right{display:flex;align-items:center;gap:6px;}
+.sync-txt{font-size:10px;color:rgba(255,255,255,.6);}
+.btn-sair{background:rgba(255,255,255,.12);border:none;color:white;padding:4px 10px;border-radius:15px;font-size:11px;cursor:pointer;font-weight:600;}
+
+.tabs{display:flex;background:#222;}
+.tab{flex:1;padding:16px 5px;text-align:center;color:white;border:none;font-weight:bold;font-size:12px;text-transform:uppercase;background:transparent;opacity:.5;cursor:pointer;}
+.tab.ativa-rec{opacity:1;background:var(--verde);border-bottom:4px solid #fff;}
+.tab.ativa-est{opacity:1;background:var(--azul);border-bottom:4px solid #fff;}
+.tab.ativa-mov{opacity:1;background:#6a1b9a;border-bottom:4px solid #fff;}
+
+.container{max-width:500px;margin:auto;padding:12px;}
+.card{background:white;padding:15px;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.08);margin-bottom:14px;border-top:5px solid #ddd;}
+.tema-rec{border-top-color:var(--verde);}
+.tema-est{border-top-color:var(--azul);}
+.tema-mov{border-top-color:#6a1b9a;}
+
+h3{font-size:14px;margin-bottom:10px;color:#333;border-bottom:1px solid #eee;padding-bottom:5px;}
+label{font-size:11px;font-weight:bold;color:#555;display:block;margin-top:8px;}
+input,select,textarea{width:100%;padding:13px;border:1px solid #ccc;border-radius:8px;font-size:16px;margin-top:4px;background:#fff;-webkit-appearance:none;}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--verde);}
+
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+
+.box-info{background:#f1f8e9;padding:12px;border-radius:10px;display:flex;justify-content:space-around;margin:12px 0;border:1px solid #dcedc8;}
+.box-info b{display:block;font-size:17px;color:var(--verde);text-align:center;}
+.box-info span{font-size:10px;color:#666;}
+
+.btn{padding:14px;border:none;border-radius:8px;font-weight:bold;width:100%;cursor:pointer;font-size:13px;color:white;text-transform:uppercase;margin-top:8px;}
+.btn:disabled{opacity:.6;cursor:not-allowed;}
+.btn-verde{background:var(--verde);}
+.btn-azul{background:var(--azul);}
+.btn-sm-rel{background:#fff;color:var(--azul);border:2px solid var(--azul);padding:10px 2px;border-radius:6px;font-size:10px;font-weight:bold;flex:1;cursor:pointer;}
+
+table{width:100%;border-collapse:collapse;margin-top:8px;}
+td{padding:10px 4px;border-bottom:1px solid #f0f0f0;font-size:13px;}
+
+.item-lista{background:#fff;padding:13px;border-radius:8px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;border-left:5px solid var(--azul);}
+.btn-del{color:var(--erro);background:none;border:none;font-size:20px;font-weight:bold;cursor:pointer;padding:4px 8px;}
+
+.mov-item{background:white;padding:12px;border-radius:8px;margin-bottom:8px;border-left:5px solid #aaa;font-size:13px;}
+.mov-entrada{border-left-color:#2e7d32;}
+.mov-saida{border-left-color:#c62828;}
+.mov-emprestimo{border-left-color:#e65100;}
+.mov-meta{font-size:10px;color:#888;margin-top:3px;}
+
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;}
+.badge-entrada{background:#e8f5e9;color:#2e7d32;}
+.badge-saida{background:#ffebee;color:#c62828;}
+.badge-emprestimo{background:#fff3e0;color:#e65100;}
+
+.view{display:none;}
+.active-view{display:block!important;}
+.loading{padding:20px;text-align:center;color:#888;font-size:13px;}
+.alerta-sem-est{color:#c62828;font-size:11px;font-weight:700;}
+
+.filtro-bar{display:flex;gap:5px;margin-bottom:10px;flex-wrap:wrap;}
+.fbtn{padding:5px 10px;border:1.5px solid #ddd;border-radius:15px;background:white;font-size:11px;font-weight:600;cursor:pointer;color:#666;}
+.fbtn.active{background:#222;color:white;border-color:#222;}
+
+.offline-bar{display:none;background:#e65100;color:white;text-align:center;padding:6px;font-size:12px;font-weight:600;}
+
+/* ============================================================
+   SISTEMA DE VOZ
+   ============================================================ */
+
+/* Botão mic pequeno ao lado dos campos */
+.campo-voz { position:relative; display:flex; align-items:center; gap:6px; margin-top:4px; }
+.campo-voz > input,
+.campo-voz > select,
+.campo-voz > textarea { flex:1; margin-top:0; min-width:0; }
+.btn-mic {
+  width:40px; height:40px; min-width:40px;
+  border-radius:50%; border:none;
+  background:#e8f5e9; color:var(--verde);
+  font-size:17px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:background .2s,transform .15s;
+  flex-shrink:0;
+}
+.btn-mic:active { transform:scale(.9); }
+.btn-mic.gravando { background:var(--verde); color:#fff; animation:mic-pulse .7s ease-in-out infinite; }
+@keyframes mic-pulse {
+  0%,100% { box-shadow:0 0 0 0 rgba(27,94,32,.5); }
+  50%      { box-shadow:0 0 0 10px rgba(27,94,32,0); }
+}
+
+/* Botão "Ditado Completo" no topo do formulário */
+.btn-voz-completo {
+  width:100%; padding:12px; border:2px dashed #a5d6a7;
+  border-radius:10px; background:#f1f8e9;
+  color:var(--verde); font-weight:700; font-size:13px;
+  cursor:pointer; display:flex; align-items:center;
+  justify-content:center; gap:8px; margin-bottom:14px;
+  transition:background .2s;
+}
+.btn-voz-completo:active { background:#dcedc8; }
+
+/* Overlay do painel de voz */
+.voz-overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,.6); z-index:9990;
+  align-items:flex-end; justify-content:center;
+}
+.voz-overlay.show { display:flex; }
+
+.voz-painel {
+  background:#fff; border-radius:22px 22px 0 0;
+  padding:0; width:100%; max-width:480px;
+  overflow:hidden;
+  box-shadow:0 -8px 40px rgba(0,0,0,.25);
+  animation:slide-up .28s cubic-bezier(.22,1,.36,1);
+}
+@keyframes slide-up { from { transform:translateY(100%); } to { transform:translateY(0); } }
+
+/* Cabeçalho do painel */
+.voz-header {
+  background:var(--verde); color:#fff;
+  padding:14px 18px 12px;
+  display:flex; align-items:center; gap:10px;
+}
+.voz-header-info { flex:1; }
+.voz-modo-label { font-size:10px; opacity:.75; text-transform:uppercase; letter-spacing:1px; }
+.voz-campo-atual { font-size:16px; font-weight:800; margin-top:2px; }
+.voz-step-badge {
+  background:rgba(255,255,255,.2); border-radius:20px;
+  padding:4px 10px; font-size:11px; font-weight:700; white-space:nowrap;
+}
+
+/* Corpo do painel */
+.voz-body { padding:18px; }
+
+/* Área de transcrição */
+.voz-transcricao-box {
+  min-height:60px; background:#f5f5f5; border-radius:12px;
+  padding:14px 16px; font-size:17px; line-height:1.4;
+  color:#222; word-break:break-word; margin-bottom:14px;
+  border:2px solid transparent; transition:border-color .2s;
+  position:relative;
+}
+.voz-transcricao-box.ouvindo { border-color:var(--verde); background:#f1f8e9; }
+.voz-transcricao-box.interim { color:#888; font-style:italic; }
+
+/* Ondas animadas de gravação */
+.voz-ondas {
+  display:flex; align-items:center; justify-content:center;
+  gap:4px; height:36px; margin-bottom:10px;
+}
+.voz-ondas span {
+  display:inline-block; width:4px; border-radius:4px;
+  background:var(--verde); opacity:.3;
+  animation:onda 1.1s ease-in-out infinite;
+}
+.voz-ondas.ativo span { opacity:1; }
+.voz-ondas span:nth-child(1){animation-delay:.0s;height:10px;}
+.voz-ondas span:nth-child(2){animation-delay:.1s;height:18px;}
+.voz-ondas span:nth-child(3){animation-delay:.2s;height:26px;}
+.voz-ondas span:nth-child(4){animation-delay:.3s;height:18px;}
+.voz-ondas span:nth-child(5){animation-delay:.4s;height:10px;}
+@keyframes onda {
+  0%,100% { transform:scaleY(1); }
+  50%      { transform:scaleY(1.8); }
+}
+
+/* Status de voz */
+.voz-status { font-size:12px; color:#888; text-align:center; margin-bottom:14px; min-height:18px; }
+
+/* Botões de ação */
+.voz-acoes { display:flex; gap:8px; }
+.voz-acoes button { flex:1; padding:13px; border:none; border-radius:10px; font-weight:700; font-size:13px; cursor:pointer; transition:opacity .15s; }
+.voz-acoes button:active { opacity:.8; }
+.btn-voz-cancelar { background:#f0f0f0; color:#555; }
+.btn-voz-repetir  { background:#fff3e0; color:#e65100; border:1.5px solid #ffcc80 !important; }
+.btn-voz-ok       { background:var(--verde); color:#fff; }
+
+/* Barra de progresso dos campos (modo completo) */
+.voz-progresso {
+  display:none; padding:0 18px 14px;
+}
+.voz-progresso.show { display:block; }
+.voz-prog-label { font-size:10px; color:#888; margin-bottom:5px; text-transform:uppercase; letter-spacing:.5px; }
+.voz-prog-bar { height:4px; background:#eee; border-radius:4px; overflow:hidden; }
+.voz-prog-fill { height:100%; background:var(--verde); border-radius:4px; transition:width .3s; }
+.voz-prog-passos { display:flex; gap:4px; margin-top:8px; flex-wrap:wrap; }
+.voz-passo {
+  padding:3px 8px; border-radius:12px; font-size:10px;
+  font-weight:700; background:#eee; color:#999;
+  transition:all .2s;
+}
+.voz-passo.done  { background:#e8f5e9; color:var(--verde); }
+.voz-passo.atual { background:var(--verde); color:#fff; }
+
+/* Dica de campo */
+.voz-dica {
+  font-size:11px; color:#888; text-align:center;
+  margin-bottom:10px; padding:6px 10px;
+  background:#fff8e1; border-radius:8px;
+  border:1px solid #ffe082;
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     PAINEL DE VOZ
+     ============================================================ -->
+<div class="voz-overlay" id="voz-overlay" onclick="vozFecharFora(event)">
+  <div class="voz-painel" id="voz-painel">
+
+    <!-- Cabeçalho -->
+    <div class="voz-header">
+      <div style="font-size:24px">🎙️</div>
+      <div class="voz-header-info">
+        <div class="voz-modo-label" id="voz-modo-label">Campo</div>
+        <div class="voz-campo-atual" id="voz-campo-atual">—</div>
+      </div>
+      <div class="voz-step-badge" id="voz-step-badge" style="display:none"></div>
+    </div>
+
+    <!-- Progresso (modo completo) -->
+    <div class="voz-progresso" id="voz-progresso">
+      <div class="voz-prog-label">Progresso do ditado</div>
+      <div class="voz-prog-bar"><div class="voz-prog-fill" id="voz-prog-fill" style="width:0%"></div></div>
+      <div class="voz-prog-passos" id="voz-prog-passos"></div>
+    </div>
+
+    <!-- Corpo -->
+    <div class="voz-body">
+      <div class="voz-dica" id="voz-dica">Aguardando microfone...</div>
+
+      <!-- Ondas de áudio -->
+      <div class="voz-ondas" id="voz-ondas">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+
+      <!-- Transcrição -->
+      <div class="voz-transcricao-box" id="voz-transcricao">—</div>
+
+      <!-- Status -->
+      <div class="voz-status" id="voz-status">Toque em gravar para começar</div>
+
+      <!-- Botões -->
+      <div class="voz-acoes">
+        <button class="btn-voz-cancelar" onclick="vozCancelar()">✕ Fechar</button>
+        <button class="btn-voz-repetir" id="btn-voz-gravar" onclick="vozGravar()">🎙️ Gravar</button>
+        <button class="btn-voz-ok" id="btn-voz-ok" onclick="vozConfirmar()" style="display:none">✓ Usar</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- OFFLINE BAR -->
+<div class="offline-bar" id="offline-bar"> Você está offline — dados salvos localmente</div>
+
+<!-- INSTALL BANNER -->
+<div id="install-banner">
+  <p> Instalar AgroPro no seu celular</p>
+  <button id="btn-instalar" onclick="instalarPWA()">INSTALAR</button>
+  <button id="btn-fechar-banner" onclick="fecharBanner()"></button>
+</div>
+
+<!-- AUTH -->
+<div id="auth-screen" class="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <h2> AgroPro</h2>
+      <p>Receituário · Estoque · Nuvem</p>
+    </div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchTab('login')">Entrar</button>
+      <button class="auth-tab" onclick="switchTab('signup')">Cadastrar</button>
+    </div>
+    <div class="afield"><label>E-mail</label><input type="email" id="aEmail" placeholder="seu@email.com" autocomplete="email"></div>
+    <div class="afield"><label>Senha</label><input type="password" id="aSenha" placeholder="••••••••" autocomplete="current-password"></div>
+    <div class="afield hidden" id="f-nome"><label>Nome</label><input type="text" id="aNome" placeholder="Seu nome"></div>
+    <button class="btn-auth" id="btnAuth" onclick="handleAuth()">ENTRAR</button>
+    <div id="auth-msg"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-left"> AgroPro — <span id="chip-user"></span></div>
+    <div class="topbar-right">
+      <span class="sync-txt" id="sync-txt"> online</span>
+      <button class="btn-sair" onclick="logout()">Sair</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button id="tab-rec" class="tab ativa-rec" onclick="mudar('rec')"> Receita</button>
+    <button id="tab-est" class="tab" onclick="mudar('est')"> Estoque</button>
+    <button id="tab-mov" class="tab" onclick="mudar('mov')"> Movim.</button>
+  </div>
+
+  <div class="container">
+
+    <!-- RECEITUÁRIO -->
+    <div id="v-rec" class="view active-view">
+      <div class="card tema-rec">
+        <h3>🌿 Área e Calda</h3>
+
+        <button class="btn-voz-completo" onclick="vozDitadoCompleto()">
+          🎙️ Ditado Completo por Voz
+        </button>
+
+        <label>Fazenda / Talhão</label>
+        <div class="campo-voz">
+          <input type="text" id="faz" placeholder="Ex: Fazenda Santa Fé">
+          <button class="btn-mic" onclick="vozCampo('faz','Fazenda ou Talhão','texto')" title="Ditar">🎙️</button>
+        </div>
+
+        <div class="grid-3">
+          <div>
+            <label>Área (ha)</label>
+            <div class="campo-voz">
+              <input type="number" id="ha" oninput="calc()" style="padding:13px 4px;">
+              <button class="btn-mic" onclick="vozCampo('ha','Área em hectares','numero')" title="Ditar">🎙️</button>
+            </div>
+          </div>
+          <div>
+            <label>Tanque (L)</label>
+            <div class="campo-voz">
+              <input type="number" id="tq" value="2000" oninput="calc()" style="padding:13px 4px;">
+              <button class="btn-mic" onclick="vozCampo('tq','Volume do Tanque','numero')" title="Ditar">🎙️</button>
+            </div>
+          </div>
+          <div>
+            <label>Vazão (L/ha)</label>
+            <div class="campo-voz">
+              <input type="number" id="vz" value="100" oninput="calc()" style="padding:13px 4px;">
+              <button class="btn-mic" onclick="vozCampo('vz','Vazão L por ha','numero')" title="Ditar">🎙️</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="box-info">
+          <div><span>CALDA TOTAL</span><b id="res-calda">0 L</b></div>
+          <div><span>TANQUES</span><b id="res-tanque">0</b></div>
+          <div><span>ÚLTIMO TQ</span><b id="res-resto">0 L</b></div>
+        </div>
+      </div>
+
+      <div class="card tema-rec">
+        <h3>🧪 Produtos</h3>
+        <label>Produto <small style="color:#888;font-weight:normal">(estoque ou qualquer nome)</small></label>
+        <div class="campo-voz">
+          <input type="text" id="pNom" list="sug" placeholder="Digite ou selecione do estoque" oninput="checarEstoque()">
+          <button class="btn-mic" onclick="vozCampo('pNom','Nome do Produto','texto',checarEstoque)" title="Ditar">🎙️</button>
+        </div>
+        <datalist id="sug"></datalist>
+        <div id="info-est-prod" style="font-size:11px;margin-top:4px;min-height:16px;"></div>
+        <div class="grid-2">
+          <div>
+            <label>Dose</label>
+            <div class="campo-voz">
+              <input type="number" id="pDos" placeholder="Dose">
+              <button class="btn-mic" onclick="vozCampo('pDos','Dose do Produto','numero')" title="Ditar">🎙️</button>
+            </div>
+          </div>
+          <div><label>Unidade</label><select id="pUni"><option>L/ha</option><option>kg/ha</option><option>ml/ha</option><option>g/ha</option></select></div>
+        </div>
+        <button class="btn btn-verde" onclick="addP()">+ ADICIONAR PRODUTO</button>
+        <table><tbody id="lista-p"></tbody></table>
+        <label>Observações</label>
+        <div class="campo-voz" style="margin-top:4px;">
+          <textarea id="obs_r" rows="2" placeholder="Opcional..." style="flex:1;margin-top:0;"></textarea>
+          <button class="btn-mic" onclick="vozCampo('obs_r','Observações','texto')" title="Ditar" style="align-self:flex-start;">🎙️</button>
+        </div>
+        <button class="btn btn-verde" style="background:#2e7d32;margin-top:12px" id="btnSalvarOS" onclick="salvarR()">📋 GERAR OS E BAIXAR ESTOQUE</button>
+      </div>
+
+      <div class="card tema-rec">
+        <h3>📂 OS Salvas</h3>
+        <div id="lista-os"><div class="loading">Carregando...</div></div>
+      </div>
+    </div>
+
+        <!-- ESTOQUE -->
+    <div id="v-est" class="view">
+      <div class="card tema-est">
+        <h3> Lançar Movimento</h3>
+        <label>Tipo</label>
+        <select id="eTip" onchange="ajustarMotivo()">
+          <option value="ENTRADA"> ENTRADA</option>
+          <option value="SAIDA"> SAÍDA</option>
+          <option value="EMPRESTIMO"> EMPRÉSTIMO</option>
+        </select>
+        <label>Produto</label>
+        <input type="text" id="eNom" placeholder="Nome do Produto">
+        <div class="grid-2">
+          <div><label>Quantidade</label><input type="number" id="eQtd" placeholder="Qtd"></div>
+          <div><label>Unidade</label><select id="eUni"><option>L</option><option>kg</option><option>ml</option><option>g</
+ <option value="Beg">Beg</option>
+option></select></div>
+        </div>
+        <div id="div-des" style="display:none">
+          <label id="lbl-motivo">Destino / Pessoa</label>
+          <input type="text" id="eDes" placeholder="Para onde vai?">
+        </div>
+        <button class="btn btn-azul" id="btnRegEstoque" onclick="regEstoque()"> SALVAR NO ESTOQUE</button>
+      </div>
+
+      <div class="card tema-est">
+        <h3> Relatórios PDF</h3>
+        <div style="display:flex;gap:5px;margin-bottom:12px;">
+          <button class="btn-sm-rel" onclick="relatorio('INVENTARIO')">ESTOQUE</button>
+          <button class="btn-sm-rel" onclick="relatorio('SAIDA')">SAÍDAS</button>
+          <button class="btn-sm-rel" onclick="relatorio('EMPRESTIMO')">EMPRÉST.</button>
+        </div>
+        <h3> Saldos Atuais</h3>
+        <div id="saldos-e"><div class="loading">Carregando...</div></div>
+      </div>
+    </div>
+
+    <!-- MOVIMENTAÇÕES -->
+    <div id="v-mov" class="view">
+      <div class="card tema-mov">
+        <h3> Histórico de Movimentações</h3>
+        <div class="filtro-bar">
+          <button class="fbtn active" onclick="setFiltro('TODOS',this)">Todos</button>
+          <button class="fbtn" onclick="setFiltro('ENTRADA',this)">Entradas</button>
+          <button class="fbtn" onclick="setFiltro('SAIDA',this)">Saídas</button>
+          <button class="fbtn" onclick="setFiltro('EMPRESTIMO',this)">Empréstimos</button>
+        </div>
+        <div id="lista-movs"><div class="loading">Carregando...</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ============================================================
+// MÓDULO DE VOZ — AgroPro
+// Web Speech API (Chrome Android, Edge)
+// ============================================================
+
+const VOZ = {
+  // Estado
+  campoId:    null,
+  tipo:       'texto',      // 'texto' | 'numero'
+  callback:   null,         // função chamada após preencher
+  modoCompleto: false,
+  stepIndex:  0,
+  steps:      [],
+  transcricao: '',
+  recog:      null,
+  gravando:   false,
+
+  // Passos do ditado completo
+  PASSOS_COMPLETO: [
+    { id:'faz',  label:'Fazenda / Talhão',    tipo:'texto',  dica:'Diga o nome da fazenda ou talhão' },
+    { id:'ha',   label:'Área (hectares)',      tipo:'numero', dica:'Diga o número de hectares. Ex: "cinquenta" ou "50"' },
+    { id:'tq',   label:'Volume do Tanque (L)', tipo:'numero', dica:'Diga o volume em litros. Ex: "dois mil"' },
+    { id:'vz',   label:'Vazão (L/ha)',         tipo:'numero', dica:'Diga a vazão. Ex: "cem" ou "150"' },
+  ],
+
+  suportado() {
+    return 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
+  },
+
+  // ---- Abrir para campo único ----
+  abrirCampo(campoId, label, tipo, cb) {
+    if (!this.suportado()) {
+      alert('⚠️ Reconhecimento de voz não suportado.\nUse o Chrome no Android.');
+      return;
+    }
+    this.campoId      = campoId;
+    this.tipo         = tipo || 'texto';
+    this.callback     = cb || null;
+    this.modoCompleto = false;
+    this.transcricao  = '';
+
+    document.getElementById('voz-modo-label').textContent = 'Ditando campo';
+    document.getElementById('voz-campo-atual').textContent = label;
+    document.getElementById('voz-step-badge').style.display = 'none';
+    document.getElementById('voz-progresso').classList.remove('show');
+    document.getElementById('voz-dica').textContent = this._dica(tipo);
+    this._setTranscricao('', false);
+    this._setStatus('Toque em 🎙️ Gravar para começar');
+    document.getElementById('btn-voz-ok').style.display = 'none';
+    document.getElementById('btn-voz-gravar').textContent = '🎙️ Gravar';
+    document.getElementById('voz-overlay').classList.add('show');
+  },
+
+  // ---- Ditado completo (modo guiado) ----
+  abrirCompleto() {
+    if (!this.suportado()) {
+      alert('⚠️ Reconhecimento de voz não suportado.\nUse o Chrome no Android.');
+      return;
+    }
+    this.modoCompleto = true;
+    this.stepIndex    = 0;
+    this.steps        = [...this.PASSOS_COMPLETO];
+
+    // Montar barra de progresso
+    const passos = document.getElementById('voz-prog-passos');
+    passos.innerHTML = this.steps.map((s, i) =>
+      `<span class="voz-passo" id="vp-${i}">${s.label.split(' ')[0]}</span>`
+    ).join('');
+    document.getElementById('voz-progresso').classList.add('show');
+    document.getElementById('voz-step-badge').style.display = 'block';
+    document.getElementById('voz-overlay').classList.add('show');
+    this._irParaStep(0);
+  },
+
+  _irParaStep(idx) {
+    this.stepIndex   = idx;
+    const step       = this.steps[idx];
+    this.campoId     = step.id;
+    this.tipo        = step.tipo;
+    this.transcricao = '';
+
+    document.getElementById('voz-modo-label').textContent = `Passo ${idx+1} de ${this.steps.length}`;
+    document.getElementById('voz-campo-atual').textContent = step.label;
+    document.getElementById('voz-step-badge').textContent = `${idx+1}/${this.steps.length}`;
+    document.getElementById('voz-dica').textContent = step.dica;
+    document.getElementById('voz-prog-fill').style.width = (idx / this.steps.length * 100) + '%';
+
+    // Atualizar pastilhas
+    document.querySelectorAll('.voz-passo').forEach((el, i) => {
+      el.className = 'voz-passo' + (i < idx ? ' done' : i === idx ? ' atual' : '');
+    });
+
+    this._setTranscricao('', false);
+    this._setStatus('Toque em 🎙️ Gravar para começar');
+    document.getElementById('btn-voz-ok').style.display = 'none';
+    document.getElementById('btn-voz-gravar').textContent = '🎙️ Gravar';
+    document.getElementById('voz-ondas').classList.remove('ativo');
+  },
+
+  // ---- Gravar ----
+  gravar() {
+    if (this.gravando) { this._pararRecog(); return; }
+
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    this.recog = new SR();
+    this.recog.lang = 'pt-BR';
+    this.recog.continuous = false;
+    this.recog.interimResults = true;
+    this.recog.maxAlternatives = 3;
+
+    this.recog.onstart = () => {
+      this.gravando = true;
+      document.getElementById('btn-voz-gravar').textContent = '⏹ Parar';
+      document.getElementById('btn-voz-ok').style.display = 'none';
+      document.getElementById('voz-ondas').classList.add('ativo');
+      this._setStatus('Ouvindo...');
+      this._setTranscricao('Fale agora...', true);
+    };
+
+    this.recog.onresult = (e) => {
+      let interim = '', final = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) final += t;
+        else interim += t;
+      }
+      const txt = (final || interim).trim();
+      this.transcricao = txt;
+      this._setTranscricao(txt, !final);
+    };
+
+    this.recog.onerror = (e) => {
+      const msgs = {
+        'not-allowed': '⛔ Permissão negada. Libere o microfone nas configurações.',
+        'no-speech':   '🔇 Nenhuma fala detectada. Tente de novo.',
+        'network':     '📡 Erro de rede.',
+      };
+      this._setStatus(msgs[e.error] || '❌ Erro: ' + e.error);
+      this._pararRecog();
+    };
+
+    this.recog.onend = () => {
+      this.gravando = false;
+      document.getElementById('voz-ondas').classList.remove('ativo');
+      document.getElementById('btn-voz-gravar').textContent = '🔄 Repetir';
+
+      if (this.transcricao) {
+        document.getElementById('btn-voz-ok').style.display = 'block';
+        this._setStatus('Confira a transcrição e toque em ✓ Usar');
+      } else {
+        this._setStatus('Nada detectado. Tente novamente.');
+      }
+    };
+
+    this.recog.start();
+  },
+
+  _pararRecog() {
+    if (this.recog) { try { this.recog.stop(); } catch(e){} }
+    this.gravando = false;
+  },
+
+  // ---- Confirmar ----
+  confirmar() {
+    if (!this.transcricao || !this.campoId) return;
+
+    let valor = this.transcricao.trim();
+    if (this.tipo === 'numero') valor = this._textoParaNumero(valor);
+
+    const campo = document.getElementById(this.campoId);
+    if (campo) {
+      campo.value = valor;
+      campo.dispatchEvent(new Event('input', { bubbles: true }));
+      campo.dispatchEvent(new Event('change', { bubbles: true }));
+      this._flashCampo(campo);
+    }
+    if (this.callback) { try { this.callback(); } catch(e){} }
+
+    // Modo completo: avançar para próximo passo
+    if (this.modoCompleto) {
+      const prox = this.stepIndex + 1;
+      if (prox < this.steps.length) {
+        setTimeout(() => this._irParaStep(prox), 300);
+      } else {
+        // Concluído
+        document.getElementById('voz-prog-fill').style.width = '100%';
+        document.querySelectorAll('.voz-passo').forEach(el => {
+          el.className = 'voz-passo done';
+        });
+        this._setStatus('✅ Ditado completo! Agora adicione os produtos.');
+        document.getElementById('voz-campo-atual').textContent = 'Concluído!';
+        document.getElementById('btn-voz-ok').style.display = 'none';
+        setTimeout(() => this.fechar(), 1800);
+      }
+    } else {
+      this.fechar();
+    }
+  },
+
+  // ---- Fechar ----
+  fechar() {
+    this._pararRecog();
+    document.getElementById('voz-overlay').classList.remove('show');
+    this.campoId = null; this.transcricao = ''; this.modoCompleto = false;
+  },
+
+  fecharFora(e) {
+    if (e.target === document.getElementById('voz-overlay')) this.fechar();
+  },
+
+  // ---- Helpers ----
+  _setTranscricao(txt, interim) {
+    const el = document.getElementById('voz-transcricao');
+    el.textContent = txt || '—';
+    el.classList.toggle('ouvindo', !interim && !!txt);
+    el.classList.toggle('interim', !!interim);
+  },
+
+  _setStatus(txt) {
+    document.getElementById('voz-status').textContent = txt;
+  },
+
+  _flashCampo(campo) {
+    campo.style.transition = 'background .3s';
+    campo.style.background = '#e8f5e9';
+    campo.style.borderColor = '#1b5e20';
+    setTimeout(() => {
+      campo.style.background = '';
+      campo.style.borderColor = '';
+    }, 1200);
+  },
+
+  _dica(tipo) {
+    return tipo === 'numero'
+      ? 'Diga apenas o número. Ex: "cinquenta", "2000", "cem vírgula cinco"'
+      : 'Diga o texto do campo claramente';
+  },
+
+  _textoParaNumero(txt) {
+    // Normalizar português falado para número
+    const mapaExtenso = {
+      'zero':0,'um':1,'uma':1,'dois':2,'duas':2,'três':3,'quatro':4,
+      'cinco':5,'seis':6,'sete':7,'oito':8,'nove':9,'dez':10,
+      'onze':11,'doze':12,'treze':13,'catorze':14,'quatorze':14,'quinze':15,
+      'dezesseis':16,'dezessete':17,'dezoito':18,'dezenove':19,
+      'vinte':20,'trinta':30,'quarenta':40,'cinquenta':50,'sessenta':60,
+      'setenta':70,'oitenta':80,'noventa':90,'cem':100,'cento':100,
+      'duzentos':200,'duzentas':200,'trezentos':300,'trezentas':300,
+      'quatrocentos':400,'quatrocentas':400,'quinhentos':500,'quinhentas':500,
+      'seiscentos':600,'seiscentas':600,'setecentos':700,'setecentas':700,
+      'oitocentos':800,'oitocentas':800,'novecentos':900,'novecentas':900,
+      'mil':1000,'meia':0.5,'meio':0.5,
+    };
+
+    let s = txt.toLowerCase()
+      .replace(/\bvirgula\b|\bvírgula\b|\be meio\b/g, '.')
+      .replace(/\be\b/g, '+')
+      .trim();
+
+    // Já é número? retornar direto
+    const direto = parseFloat(s.replace(',', '.'));
+    if (!isNaN(direto)) return String(direto);
+
+    // Tentar converter por extenso
+    let total = 0, atual = 0, haDecimal = false, parteDecimal = '';
+    const partes = s.split(/[\s+]+/);
+    for (const p of partes) {
+      if (p === '.') { haDecimal = true; continue; }
+      if (haDecimal) { parteDecimal += p; continue; }
+      const v = mapaExtenso[p];
+      if (v === undefined) continue;
+      if (p === 'mil') {
+        atual = atual === 0 ? 1 : atual;
+        total += atual * 1000;
+        atual = 0;
+      } else if (v >= 100) {
+        total += v;
+        atual = 0;
+      } else {
+        atual += v;
+      }
+    }
+    let resultado = total + atual;
+    if (haDecimal && parteDecimal) {
+      const dec = mapaExtenso[parteDecimal];
+      if (dec !== undefined) {
+        // "cinquenta vírgula cinco" → 50.5
+        resultado = resultado + dec / 10;
+      }
+    }
+    return resultado > 0 ? String(resultado) : txt;
+  }
+};
+
+// ---- Funções globais chamadas pelo HTML ----
+function vozCampo(id, label, tipo, cb) { VOZ.abrirCampo(id, label, tipo, cb); }
+function vozDitadoCompleto()           { VOZ.abrirCompleto(); }
+function vozGravar()                   { VOZ.gravar(); }
+function vozConfirmar()                { VOZ.confirmar(); }
+function vozCancelar()                 { VOZ.fechar(); }
+function vozFecharFora(e)              { VOZ.fecharFora(e); }
+</script>
+
+<script src="./app.js"></script>
+</body>
+</html>
